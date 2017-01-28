@@ -1,0 +1,318 @@
+WebGL tutorial and Three.js
+
+Security isnt too great
+
+WebGL => Great Bandwith, OpenGL based, way of working with GPU, OpenGL ES 2.0, WEBGL is a js
+wrapping between OpenGL es 2.0 and javascript
+
+<canvas id='ce'></canvas>
+<script>
+var canvasElement = document.getElementById('ce');
+
+var ctx = canvasElement.getContext('webgl');
+
+ctx.clearColor(1,0,0,1);
+
+ctx.clear(ctx.COLOR_BUFFER_BIT);
+
+</script>
+
+This creates a red rectangle. To utilize webGL you utilize the canvas elements, 
+provide a drawing surface, and JavaScript to call the various WebGL APIs. 
+Pure WebGL  takes too much time to use. 
+
+Three JS provides following functionality; 
+
+Graphical Primitives, 
+Loaders for many popular modelling formats
+Useful math and geometry effects
+Limited Effects fog, particle engine, sprites
+Ability to work with shaders: Shaders are GPUs that can manipulate the position and color 
+of elements on the screen, run directly on GPU
+Basic collision detection functionality - Box3 and Raycasting
+Big Community
+
+Donwload source for examples 
+
+Three JS needs
+A scence
+A camara
+Lighting
+Actors => objects for our scence => tedious to dev these models so youll prolly want to create some 
+kind of boilerplate app of these setup already  
+
+Simple app to display red cube in screen. 
+Create am html page to display content => made one alrdy called index.html. 
+ Also created a folder called scripts where i keep js files and to keep everythign organized
+ You'll also need Three js library so donwload it. Add a reference to three.js library in. 
+Split out scene setup logic into another file called app js so add that as well. 
+
+This is the div we render content too:
+<div id="webgl-container"></div>
+
+
+
+<!DOCTYPE html>
+<html>
+ <head>
+    <title> WebGL with three.js Fundamentals </title>
+ </head>
+<body>
+
+    <div id="webgl-container"></div>
+
+    <script src="scripts/three.js"></script> <!--the 3.js library -->
+    <script src="scripts/app.js"></script>
+ </body>
+ </html>
+
+ In app.js, create a self executin javscript function which when executed will assign the results to the variable 
+ example You dont have to use this logic to setup scenne but it has many advantages such as stopping objects
+ clobbering global scope and it also tends to keep everything neat and modular. 
+
+The first object we will create is a scene. In Three.JS a scenes main purpose is to act as a container for all 
+the other items that make up our application. Such as camara, lights, and any objects that we want to display. 
+Once weve added our scene, we will also create a renderer. this tells 3js how content will be displayed on the 
+webpage by specifying the type of renderer to use. 
+3js supports a couple of different types of renderer's that can provide full back options for older browsers
+that dont support WebGL, but for now we will stick with the WebGLRenderer, which is the most performant and 
+feature rich of all the renderers. Before we get on with adding a camara to our scene, we need to talk about 
+coordinates
+
+Three JS uses cartesian coordinate system 0,0,0.
+X and Y axis. 0,0, is bottom left corner, called origin. 
+If youve done work in CSS, you know origin moves to top left corner. Three JS and web GL change this and 
+place origin in center, with +X, -X, +Y, and -Y coordinate systems. Depth position, called z axis. 
+Using there numbers we can refer to object in screen (0,1,2) and this is called a vector. Contains all the
+info to place object anywhere in screen. If you need something closer to the camara or viewer, you can increase
+the Z value, and to place it farther away, decrease the z value. When you add object to a scene in 3js
+if you dont specify a positon, the object will always be placed at 0,0,0. But dont worry, you can always 
+move it around later. That means if we had a cube that the width, height, and depth of 10, it would be placed
+at the center, with its top and bottom at 5Y and -5Y, left right at -5X and +5X and depth at -5Z and 5Z.
+
+Lets continue setting up screen so we need objects.
+
+Create a function to initialize scene: function initScene(){}
+
+//When we created our camera we need to specify a few values about how to set it up. 
+Camera, first of these is FOV or the camera frustum vertical field of view. This is the vertical field of view
+from top to bottom of the screen and is specified in degrees. Changing this is like changing lens on camera.
+Values between 35 and 45 is a good match. Next parameter we specified is the aspect ratio. Usually this is 
+width divided by height of the container. Next up we need to define the near and far planes. Only objects
+inside this range will be rendered. These values can be quite useful for performance reasons as it means that
+Three.JS doesnt need to calculate stuff thats outside these boundaries. When we add in our camera, by
+default its going to point to the -Z access, so be looking into the screen. We can modify this using the 
+LookAt method, but we're going to leave it alone for now. 
+
+Three.js has 2 maint types of camera: a perspective camera which is the one we'll be using for most of 
+this course, and also another type called an autographic camera. Autographic camera doesnt display 
+perspective but it can be useful for certain types of scnerios where you want kind of an isometric
+view, maybe something similar to sim city, something rotating infront of you like a shiny car .
+And dont think you are constrained to using just one camera. You can have multiple cameras on the same scene. 
+by splitting the screen. 
+Three Js Rendering Layer, Out of the box it suppports three main types of renderers. WebGL renderer => most 
+feature rich and performant, theres the Canvas renderer and the SVG renderer => this renderer isnt part of 
+core library. Canvas renderer doesnt support all the functionality like WebGL but provide a full back options
+for those using older browsers.  
+
+scripts/app.js
+
+
+  var example = (function() {
+
+"use strict";
+
+    var scene = new THREE.Scene();
+
+    //Okay so first thing to do is to just start data wrap application so that it will work on older browsers that 
+    //support Canvas but dont support WebGL. So im going to take the initialization of the renderer and 
+    //check the browser and choose. 
+    //this checks existance of WebGLRenderingContext
+    
+    var renderer = window.WebGLRenderingContext ? new THREE.WebGLRenderer() : new THREE.CanvasRenderer(); 
+    var light = new THREE.AmbientLight(0xffffff); //create a new light
+    var camera;
+    var box; //camara and box variables to hold camara and the box that we create 
+
+    function initScene(){
+        //tell the renderer what size that we'll be rendering the content
+        renderer.setSize(window.innerWidth, window.innerHeight);
+
+        //tell it where to render content
+        document.getElementById("webgl-container").appendChild(renderer.domElement);
+
+        //add light to scene or we wont see too much. 
+        scene.add(light);
+
+        //Now initialize camera
+        camera = new THREE.PerspectiveCamera(
+            35,
+            window.innerWidth / window.innerHeight,
+            1,
+            1000
+        );
+
+        camera.position.z=100;
+
+        //add camera to scene as well. 
+        scene.add( camera );
+
+        //Lets add a simple cube to the scene.
+
+        box = new THREE.Mesh(
+            new THREE.BoxGeometry(20,20,20),      //Define dimesnsions of cube  
+            new THREE.MeshBasicMaterial({color: 0xFF0000})  //define covering of cube
+        );
+
+        box.name="box";
+
+        scene.add(box); 
+
+        render(); //Once we set up scene, we will begin rendering with this function that we create below
+    }
+
+    //this tells 3js to actually render the scene. 
+    //call it render,
+    //make a call to renderer.render, and this is a recursive function so its going to call itself
+    //we're using a requestAnimation frame which is something thats been built into modern browsers now. 
+    //and this will ensure the animation is as smooth as possible. 
+    function render(){
+
+        box.rotation.y += 0.01;
+
+        renderer.render(scene, camera);
+        requestAnimationFrame(render);
+    }
+
+    window.onload= initScene; //This kicks of scene initialization. 
+
+    return { //Expose scene object for debugging purposes. 
+
+        scene: scene //This is for debugging purposes. so we can debug it if somethign doesnt work
+    }
+
+ })();
+
+//Lets talk about Object3D
+this is the base class for many of the objects we are going to add to a Three.JS scene. 
+Contains a number of properties and methods that youre going to find yourself using a lot. 
+
+Important properties of Object3D
+
+.id => id is the unqiue number of the objects instance will be assigned automatically by 3js
+      you can retrieve properties by id if you want
+
+.uuid => unique identifier again, created automatically by 3js. 
+.name => we labeled cube, box. you can retrieve objects by name. 
+.position => this is a vectory representing the objects current location in the scene. 
+.userData => allows us to hold metadata or information on an object instance. 
+             For example, in a game maybe you'd use it to hold the score the player 
+             would receive for destroying the object. 
+.parent/children
+Finally, we have the parent/children properties. 
+Scene objects in Three.JS are hierarchical 
+and contain an unlimited number of children. The child/parent properties allow us to navigate 
+this hierarchy. There's also some important methods you will use in lots of applications. 
+
+getObjectByName allows us to retrieve an individual object by its name.
+                It's important to note however, that Three.JS by default won't search an 
+                objects children when you use this. If you do want to search all an objects 
+                children then in addition to the name you'll need to pass in true. 
+
+getObjectById works very similar to name, but searches for an object by id. 
+lookAt will allow you to rotate an object to face a Vector. 
+
+
+If you run the previous example, then pull up developer tools and type example into the console,
+youll get back the scene object which you can expand. 
+
+
+
+If you example the children array for the scence youll see three items,
+THREE.AmbientLight
+THREE.PerspectiveCamera
+THREE.Mesh //which is the cube
+
+var box = example.scene.getObjectByName('box');
+Type in console to change this:
+Moves it up
+
+box.position.y = 5
+box.position.y = 15 
+
+Moves it to the right
+
+box.position.x = 25
+
+by exposing objects this way you can debug very easily in console. or do experimentation. 
+
+///////////MANIPULATING OBJECTS Positon, Scale (Size), Rotation. 
+
+//specify like so:
+Object.position.x = value
+Object.position.set(x,y,z)
+
+//Or we can assign a new vector free object to specify an entirely new position
+
+Object.position = new THREE.Vector3(0,0,0);
+
+To resize an object we use the scale property. Scale is declared as factors relative
+to the original size of the object. If for ex, we have an object that was 10 units along 
+its x axis, chaning the xaxis scale to 2 would make it 20 units long. Chaning the x axis 
+scale to 2.5 would make it 25 units long. Chaning an objects scale is often needed if 
+we're importing a model from a 3D package. 
+
+Object.scale.x = value; //Specify on individual axis, or all 3 axis at once: 
+Object.scale.set(x,y,z);
+
+Rotations a bit more complex than chaning objects scale or position, manipulated using radians rather
+than degrees.
+
+radians = degrees * (pi/180)
+
+Obejct can be rotated on any of its free axis. 
+y = Verical
+Z = depth, 
+X = horizontal.
+
+Once an object has been rotated, its internal axis is also rotated. 
+Addiitonal class called axis helper which allows us to visualize an objects internal axis. 
+Use dat.GUI =>A lightweight graphical user interface for changing variables in JavaScript.
+for debugging stuff 
+
+You can set the position, and rotate cameraa around too 
+
+Say you rotate an object on its y axis. then the objects internal x and z axis will change. 
+but when you call rotate, it will be in reference to the scenes x,y,and z so itll still be all good 
+(i think)
+
+How wil child objects respond to scale, position or rotation modifications?
+added a green cube to the scene as a child to the parent cube. If if modify main 
+cubes x position, the childs x position will modify by the same amount. 
+so all these transforms will also be performed relative to the parent on any child 
+object. 
+
+Common problems three js devs facs 
+
+Check browser tools to see error or syntax messages
+
+Then these issues:
+Its behind you, you can positon an object behind or position urself inside an object or you forgot to add 
+lights, and object wont display. Or object isnt illumianted by light if you use advanced lighting features
+Also scale, because you might have scaled it too small when you import a model and cant see it. 
+
+///////////////////////
+////////////////////////
+YOU ARE ON THE MESHSES AND GEOMETRY SECTION PLS CONTINUE FROM THERE:
+
+
+
+
+
+
+
+
+
+
+
+
