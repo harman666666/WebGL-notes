@@ -305,6 +305,9 @@ Also scale, because you might have scaled it too small when you import a model a
 ////////////////////////
 YOU ARE ON THE MESHSES AND GEOMETRY SECTION PLS CONTINUE FROM THERE:
 
+Meshes: Meshes are made up of 2 different things
+    Geometry -> a bit like a scaffold for a shape. And its made up of an array of x,y,z coordinates called 
+    vertices. Define a location in 3D space and the shapes boundaries  
 
 
 
